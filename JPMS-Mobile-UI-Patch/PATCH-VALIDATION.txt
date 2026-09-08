@@ -1,0 +1,82 @@
+JPMS mobile UI patch — validation
+Base: JPMS 1.0.0 source delivered in this conversation
+Runtime: v24.19.0
+
+$ node --test tests/database.test.js tests/domain.test.js
+▶ PostgreSQL migration, ownership and accounting integration
+  ✔ profile trigger, private profiles and protected profile columns (42.663713ms)
+  ✔ RLS and composite foreign keys block cross-user rows (13.783856ms)
+  ✔ billing is idempotent, respects joining month and snapshots fees (15.153918ms)
+  ✔ receipt updates keep one income, use cash dates and prevent overpayment (20.723351ms)
+  ✔ batch receipts map to Batch Fee and delete their linked income (5.439622ms)
+  ✔ duplicate attendance and invalid statuses are rejected (3.128822ms)
+  ✔ deleting students preserves paid history and removes unpaid dependents (10.821276ms)
+  ✔ archived students stop receiving new invoices (4.079048ms)
+  ✔ repayments settle and reopen loans; generated balances cannot be forged (15.601875ms)
+  ✔ reminders persist, deduplicate and resolve completed tasks (26.457724ms)
+  ✔ backup SQL preserves accounting, escapes text and refuses nonempty targets (53.268034ms)
+  ✔ Storage policies and anonymous access reject other owners (5.133344ms)
+  ✔ administrator account removal cascades through financial relationships (7.798184ms)
+✔ PostgreSQL migration, ownership and accounting integration (4403.337528ms)
+✔ decimal money and partial payments use integer minor-unit sums (1.31609ms)
+✔ cash dates drive monthly reports; savings includes all history (28.770752ms)
+✔ year and timezone boundaries use the intended calendar day (1.432647ms)
+✔ CSV escapes formulas, quotes, commas and multiline cells (0.506576ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4554.206246
+
+Exit status: 0
+
+$ node node_modules/vite/bin/vite.js build
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 2611 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                            1.05 kB │ gzip:   0.59 kB
+dist/assets/index-wlmVA797.css            32.38 kB │ gzip:   7.93 kB
+dist/assets/calendar-check-DdXC3uWG.js     0.33 kB │ gzip:   0.24 kB
+dist/assets/esm-Ck2aO3Rn.js                0.33 kB │ gzip:   0.23 kB
+dist/assets/clock-lhUmZ3Sf.js              0.35 kB │ gzip:   0.25 kB
+dist/assets/refresh-cw-mneCCJxY.js         0.35 kB │ gzip:   0.24 kB
+dist/assets/web-BR8w-_8v.js                0.36 kB │ gzip:   0.24 kB
+dist/assets/calendar-days-JIM8biYg.js      0.78 kB │ gzip:   0.40 kB
+dist/assets/web-F3vplaLC.js                0.84 kB │ gzip:   0.40 kB
+dist/assets/esm-CcrnLdUO.js                1.37 kB │ gzip:   0.71 kB
+dist/assets/export-ABQnendw.js             1.57 kB │ gzip:   0.96 kB
+dist/assets/StudentDetail-D1Ij2QII.js      1.91 kB │ gzip:   0.99 kB
+dist/assets/Batches-CJ2-OikS.js            3.41 kB │ gzip:   1.33 kB
+dist/assets/BatchDetail-DlgUhv_N.js        3.41 kB │ gzip:   1.51 kB
+dist/assets/Notifications-owz1oHZF.js      3.49 kB │ gzip:   1.61 kB
+dist/assets/Tuition-DgIP_9y5.js            3.78 kB │ gzip:   1.53 kB
+dist/assets/AttendancePanel-DDq-VuBC.js    4.09 kB │ gzip:   1.65 kB
+dist/assets/Tasks-B0OtIjMY.js              4.62 kB │ gzip:   1.98 kB
+dist/assets/Finance-B6BF6Dcb.js            5.20 kB │ gzip:   2.15 kB
+dist/assets/Loans-CIi0cJNX.js              6.00 kB │ gzip:   2.28 kB
+dist/assets/BillingPanel-BUNWLJdi.js       6.42 kB │ gzip:   2.25 kB
+dist/assets/Settings-DUwEwJrq.js           7.89 kB │ gzip:   3.11 kB
+dist/assets/web-CE9vNQH9.js                8.47 kB │ gzip:   2.82 kB
+dist/assets/Dashboard-djAjNkrB.js        383.71 kB │ gzip: 110.69 kB
+dist/assets/index-DfwPe0nQ.js            635.39 kB │ gzip: 189.02 kB
+
+✓ built in 657ms
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Exit status: 0
+
+Scope: production compilation and the existing 18 domain/PostgreSQL tests.
+No browser visual/interaction QA, hosted Supabase photo upload test or Android device/APK build was performed. The UI changes use existing backend APIs and dependencies.
+
+Patch packaging: 8 source files (6 replacements, 2 additions).
+Base-source comparison: PASS. Overlaying the patch reproduces every tested source file.
+Dependency manifests, database files and environment template unchanged.

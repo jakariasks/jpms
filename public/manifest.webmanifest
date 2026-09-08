@@ -1,0 +1,9 @@
+{
+  "name": "Jakaria Personal Management System",
+  "short_name": "JPMS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#153d35",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

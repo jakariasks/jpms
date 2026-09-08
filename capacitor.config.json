@@ -1,0 +1,6 @@
+{
+  "appId": "com.jakaria.jpms",
+  "appName": "JPMS",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" }
+}

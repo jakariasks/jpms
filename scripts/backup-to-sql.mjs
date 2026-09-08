@@ -1,0 +1,180 @@
+/** Convert a JPMS JSON backup into reviewable SQL. No network or database execution. */
+import { readFile, writeFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+const columns = {
+  students: [
+    'id',
+    'user_id',
+    'name',
+    'phone',
+    'guardian_name',
+    'address',
+    'class',
+    'subject',
+    'monthly_fee',
+    'joining_date',
+    'active',
+    'schedule_days',
+    'schedule_time',
+    'created_at',
+  ],
+  batches: [
+    'id',
+    'user_id',
+    'batch_name',
+    'class',
+    'subject',
+    'schedule',
+    'schedule_days',
+    'schedule_time',
+    'active',
+    'created_at',
+  ],
+  batch_students: [
+    'id',
+    'user_id',
+    'batch_id',
+    'student_name',
+    'phone',
+    'guardian_name',
+    'address',
+    'monthly_fee',
+    'joining_date',
+    'active',
+    'created_at',
+  ],
+  attendance: [
+    'id',
+    'user_id',
+    'student_id',
+    'batch_student_id',
+    'date',
+    'status',
+    'note',
+    'created_at',
+  ],
+  invoices: [
+    'id',
+    'user_id',
+    'student_id',
+    'batch_student_id',
+    'title',
+    'month',
+    'amount',
+    'due_date',
+    'created_at',
+  ],
+  payments: ['id', 'user_id', 'invoice_id', 'amount', 'payment_date', 'note', 'created_at'],
+  income: ['id', 'user_id', 'title', 'category', 'amount', 'date', 'description', 'created_at'],
+  expense: ['id', 'user_id', 'title', 'category', 'amount', 'date', 'description', 'created_at'],
+  tasks: [
+    'id',
+    'user_id',
+    'title',
+    'description',
+    'date',
+    'priority',
+    'status',
+    'reminder_at',
+    'created_at',
+  ],
+  loans: [
+    'id',
+    'user_id',
+    'person_name',
+    'phone',
+    'amount',
+    'type',
+    'date',
+    'due_date',
+    'note',
+    'created_at',
+  ],
+  loan_payments: ['id', 'user_id', 'loan_id', 'amount', 'date', 'note', 'created_at'],
+  notifications: [
+    'id',
+    'user_id',
+    'kind',
+    'source_id',
+    'dedupe_key',
+    'title',
+    'body',
+    'link',
+    'read_at',
+    'created_at',
+  ],
+};
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function literal(value) {
+  if (value === null || value === undefined) return 'NULL';
+  if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error('Invalid number');
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    if (!value.every((v) => Number.isInteger(v) && v >= 0 && v <= 6))
+      throw new Error('Invalid schedule days');
+    return `ARRAY[${value.join(',')}]::integer[]`;
+  }
+  return "'" + String(value).replaceAll("'", "''") + "'";
+}
+export function buildRestoreSql(backup, targetUserId) {
+  if (
+    backup?.app !== 'JPMS' ||
+    backup.schema_version !== 1 ||
+    !uuid.test(backup.profile?.id || '') ||
+    !uuid.test(targetUserId || '')
+  )
+    throw new Error('Expected a JPMS version 1 backup and a valid target user UUID.');
+  for (const table of Object.keys(columns)) {
+    if (!Array.isArray(backup.data?.[table])) throw new Error(`Missing ${table} data`);
+    for (const row of backup.data[table])
+      if (!uuid.test(row.id || '') || row.user_id !== backup.profile.id)
+        throw new Error(`Invalid owner or ID in ${table}`);
+  }
+  const owner = literal(targetUserId),
+    guards = Object.keys(columns)
+      .map((table) => `exists(select 1 from public.${table} where user_id=${owner}::uuid)`)
+      .join(' or ');
+  const output = [
+    '-- JPMS restore. Review before running as Supabase project owner.',
+    '-- Create schema and register TARGET account first. Refuses nonempty targets.',
+    '-- Auth passwords and Storage photo bytes are not restored.',
+    'begin;',
+    'set local standard_conforming_strings=on;',
+    `select set_config('request.jwt.claim.sub',${owner},true);`,
+    `do $jpms_restore$ begin\n if not exists(select 1 from public.users where id=${owner}::uuid) then raise exception 'Target account does not exist'; end if;\n if ${guards} then raise exception 'Target workspace must be empty; restore refused'; end if;\nend $jpms_restore$;`,
+    `update public.users set name=${literal(backup.profile.name)},phone=${literal(backup.profile.phone)},theme=${literal(backup.profile.theme)},timezone=${literal(backup.profile.timezone)},profile_image=null where id=${owner}::uuid;`,
+  ];
+  for (const [table, fields] of Object.entries(columns)) {
+    const rows =
+      table === 'income' ? backup.data.income.filter((r) => !r.payment_id) : backup.data[table];
+    output.push(`\n-- ${table}: ${rows.length} records`);
+    for (const row of rows)
+      output.push(
+        `insert into public.${table}(${fields.join(',')}) values(${fields.map((field) => literal(field === 'user_id' ? targetUserId : row[field])).join(',')});`,
+      );
+  }
+  output.push(
+    'commit;',
+    '-- Receipt income and loan balances were regenerated by database triggers.',
+  );
+  return output.join('\n') + '\n';
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const [input, target, output] = process.argv.slice(2);
+  if (!input || !target || !output) {
+    console.error('Usage: node scripts/backup-to-sql.mjs BACKUP.json TARGET_USER_UUID restore.sql');
+    process.exitCode = 1;
+  } else
+    try {
+      await writeFile(output, buildRestoreSql(JSON.parse(await readFile(input, 'utf8')), target), {
+        flag: 'wx',
+      });
+      console.log('Restore SQL created. Review it before running in an empty target workspace.');
+    } catch (error) {
+      console.error(error.message);
+      process.exitCode = 1;
+    }
+}

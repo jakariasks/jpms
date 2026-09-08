@@ -1,0 +1,84 @@
+JPMS v1.0.0 — release validation
+Date: 2026-09-08
+Runtime: Node v24.19.0
+Platform: Linux x86_64
+
+Package manifest and lockfile dependency sets: MATCH
+Required source/configuration/documentation files: PRESENT
+
+$ node --test tests/database.test.js tests/domain.test.js
+▶ PostgreSQL migration, ownership and accounting integration
+  ✔ profile trigger, private profiles and protected profile columns (55.070688ms)
+  ✔ RLS and composite foreign keys block cross-user rows (14.34606ms)
+  ✔ billing is idempotent, respects joining month and snapshots fees (12.944942ms)
+  ✔ receipt updates keep one income, use cash dates and prevent overpayment (17.467539ms)
+  ✔ batch receipts map to Batch Fee and delete their linked income (5.717843ms)
+  ✔ duplicate attendance and invalid statuses are rejected (4.311507ms)
+  ✔ deleting students preserves paid history and removes unpaid dependents (8.875269ms)
+  ✔ archived students stop receiving new invoices (4.862475ms)
+  ✔ repayments settle and reopen loans; generated balances cannot be forged (14.409275ms)
+  ✔ reminders persist, deduplicate and resolve completed tasks (22.46765ms)
+  ✔ backup SQL preserves accounting, escapes text and refuses nonempty targets (48.234354ms)
+  ✔ Storage policies and anonymous access reject other owners (6.322682ms)
+  ✔ administrator account removal cascades through financial relationships (6.798276ms)
+✔ PostgreSQL migration, ownership and accounting integration (5001.210496ms)
+✔ decimal money and partial payments use integer minor-unit sums (1.047801ms)
+✔ cash dates drive monthly reports; savings includes all history (18.251726ms)
+✔ year and timezone boundaries use the intended calendar day (1.084469ms)
+✔ CSV escapes formulas, quotes, commas and multiline cells (0.457289ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5157.573045
+
+Exit status: 0
+
+$ node node_modules/vite/bin/vite.js build
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 2609 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                            1.05 kB │ gzip:   0.59 kB
+dist/assets/index-UfUOzHHV.css            27.28 kB │ gzip:   7.08 kB
+dist/assets/arrow-up-right-D1ozxwUz.js     0.19 kB │ gzip:   0.17 kB
+dist/assets/calendar-check-CGsRrJAf.js     0.33 kB │ gzip:   0.24 kB
+dist/assets/esm-SkAk6sWe.js                0.33 kB │ gzip:   0.24 kB
+dist/assets/clock-CmKd9AOV.js              0.35 kB │ gzip:   0.25 kB
+dist/assets/refresh-cw-BvOQbPpC.js         0.35 kB │ gzip:   0.24 kB
+dist/assets/web-BGc87PZJ.js                0.36 kB │ gzip:   0.24 kB
+dist/assets/calendar-days-BEdXa58o.js      0.78 kB │ gzip:   0.40 kB
+dist/assets/web-D8PO5r_3.js                0.84 kB │ gzip:   0.40 kB
+dist/assets/esm-7vDwd6C6.js                1.37 kB │ gzip:   0.71 kB
+dist/assets/export-MMTr9PQM.js             1.57 kB │ gzip:   0.97 kB
+dist/assets/StudentDetail-DjwC71Qs.js      1.91 kB │ gzip:   0.99 kB
+dist/assets/BatchDetail-DVkhDL6M.js        3.41 kB │ gzip:   1.51 kB
+dist/assets/Batches-DL7bCTwJ.js            3.42 kB │ gzip:   1.33 kB
+dist/assets/Notifications-C4VXpa2x.js      3.49 kB │ gzip:   1.61 kB
+dist/assets/Tuition-o7mcgMIK.js            3.78 kB │ gzip:   1.53 kB
+dist/assets/AttendancePanel-D43datw0.js    4.09 kB │ gzip:   1.65 kB
+dist/assets/Tasks-Dua0YKZp.js              4.63 kB │ gzip:   1.98 kB
+dist/assets/Finance-CKSRY0Am.js            5.52 kB │ gzip:   2.27 kB
+dist/assets/Loans-C8YS42pm.js              6.16 kB │ gzip:   2.36 kB
+dist/assets/BillingPanel-CFf_y2fE.js       6.41 kB │ gzip:   2.25 kB
+dist/assets/Settings-41uDgK4h.js           8.07 kB │ gzip:   3.19 kB
+dist/assets/web-Bwme4r26.js                8.47 kB │ gzip:   2.83 kB
+dist/assets/Dashboard-I-fkQXRK.js        381.27 kB │ gzip: 110.14 kB
+dist/assets/index-ClB9DA3g.js            630.72 kB │ gzip: 187.64 kB
+
+✓ built in 663ms
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+
+Exit status: 0
+
+Scope: SQL tests use embedded PostgreSQL/PGlite with minimal Auth/Storage fixtures.
+No hosted Supabase credentials were used. Browser interaction/visual QA, hosted Auth/Storage HTTP, SMTP, cron scheduling, Vercel deployment and Android build/device testing were not performed.
+Vite bundle-size advisories are recorded above; they do not fail the production build.
