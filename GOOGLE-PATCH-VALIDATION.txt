@@ -1,0 +1,33 @@
+JPMS Google Login Patch — validation
+Date: 2026-09-08
+
+Base: existing JPMS complete source with the previous Mobile UI Patch applied.
+New dependency: @capacitor/browser 8.0.4.
+Existing dependency versions remain unchanged; no packages removed from lockfile.
+
+Automated tests:
+  node --test tests/auth-links.test.js tests/database.test.js tests/domain.test.js
+  Result: PASS — 23 tests, 0 failures, 0 skipped.
+  Five new auth tests cover OAuth error parsing, native callback origin/path
+  restrictions, valid token extraction, recovery routing, and rejection of
+  incomplete/cancelled callbacks. Existing database/RLS/accounting/domain
+  tests also pass (using local PGlite, not the live Supabase project).
+
+Production build:
+  node node_modules/vite/bin/vite.js build
+  Result: PASS — Vite 8.2.2, 2617 modules transformed, exit 0.
+  Vite reports a non-fatal bundle-size warning (>500 kB main chunk).
+  No dev server or browser automation was used.
+
+Static review:
+  Google button available only on login/register; type=button outside email form.
+  Existing email/password/recovery code remains available.
+  Web uses a top-level OAuth redirect; native uses Capacitor Browser.
+  Existing profile trigger supports OAuth-created users; no SQL migration needed.
+  Earlier mobile UI/avatar source files remain byte-for-byte unchanged.
+  Patch file selection is based on SHA-256 comparison with the pre-change tree.
+
+Not verified here:
+  Live Google OAuth credentials/provider configuration, production Vercel login,
+  visual/browser interaction, native APK compilation or physical-device login.
+  Complete the setup and manual acceptance steps in README_GOOGLE_PATCH.md.
