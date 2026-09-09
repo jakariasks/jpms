@@ -21,24 +21,26 @@ import {
   EXPENSE_CATEGORIES,
   todayIn,
   monthOf,
-  summary,
+  monthLabel,
   money,
   displayDate,
   sumMoney,
 } from '../../utils/domain';
 import { exportCsv } from '../../services/export';
+import { financeReport } from '../../utils/finance';
 export default function Finance() {
   const query = useWorkspace();
   const { profile } = useAuth();
   const { openTransaction } = useOutletContext();
   const today = todayIn(profile?.timezone);
   const [kind, setKind] = useState('expense'),
-    [month, setMonth] = useState(monthOf(today)),
+    [selectedMonth, setMonth] = useState(null),
     [category, setCategory] = useState(''),
     [search, setSearch] = useState(''),
     [from, setFrom] = useState(''),
     [to, setTo] = useState(''),
     [deleting, setDeleting] = useState(null);
+  const month = selectedMonth ?? monthOf(today);
   const choices = kind === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   function openForm(type, record) {
     openTransaction({
@@ -66,44 +68,44 @@ export default function Finance() {
       </PageHeader>
       <QueryState query={query}>
         {(data) => {
-          const sums = summary(data, month || monthOf(today));
-          const matchesDate = (r) =>
-            (!month || monthOf(r.date) === month) &&
-            (!from || r.date >= from) &&
-            (!to || r.date <= to);
-          const rows = data[kind]
+          const period = financeReport(data, { month, from, to });
+          const sums = period.totals;
+          const periodLabel = [
+            month ? monthLabel(month) : 'All time',
+            (from || to) && `${from || 'Beginning'} to ${to || 'latest'}`,
+          ]
+            .filter(Boolean)
+            .join(' · ');
+          const rows = period[kind]
             .filter(
               (r) =>
-                matchesDate(r) &&
                 (!category || r.category === category) &&
                 `${r.title} ${r.description}`.toLowerCase().includes(search.toLowerCase()),
             )
             .sort(
               (a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at),
             );
-          const report = ['income', 'expense'].flatMap((type) =>
-            data[type].filter(matchesDate).map((r) => ({ ...r, type, amount: Number(r.amount) })),
-          );
+          const report = period.report;
           return (
             <>
               <div className="grid md:grid-cols-3 gap-4 mb-6">
                 <Stat
-                  label="Monthly income"
+                  label="Income"
                   value={money(sums.income)}
-                  detail={month || 'Current month'}
+                  detail={periodLabel}
                   icon={TrendingUp}
                 />
                 <Stat
-                  label="Monthly expense"
+                  label="Expenses"
                   value={money(sums.expense)}
-                  detail={month || 'Current month'}
+                  detail={periodLabel}
                   icon={TrendingDown}
                   tone="red"
                 />
                 <Stat
-                  label="Monthly savings"
-                  value={money(sums.monthlySavings)}
-                  detail="Income minus expense"
+                  label="Savings"
+                  value={money(sums.savings)}
+                  detail="Income minus expenses for the selected period"
                   icon={Wallet}
                 />
               </div>
@@ -122,6 +124,7 @@ export default function Finance() {
                 <Button
                   variant="secondary"
                   icon={Download}
+                  disabled={!period.validRange}
                   onClick={() =>
                     exportCsv(`jpms-finance-${month || 'all'}.csv`, report, [
                       { key: 'type', label: 'Type' },

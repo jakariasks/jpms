@@ -1,32 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
-const url = import.meta.env.VITE_SUPABASE_URL || '';
-const key =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-function secretKey(value) {
-  if (value.startsWith('sb_secret_')) return true;
-  try {
-    return (
-      JSON.parse(atob(value.split('.')[1].replaceAll('-', '+').replaceAll('_', '/'))).role ===
-      'service_role'
-    );
-  } catch {
-    return false;
-  }
-}
-function validUrl(value) {
-  try {
-    const parsed = new URL(value);
-    return ['https:', 'http:'].includes(parsed.protocol) && !!parsed.hostname;
-  } catch {
-    return false;
-  }
-}
-export const configured =
-  validUrl(url) &&
-  key.length > 20 &&
-  !url.includes('YOUR_') &&
-  !key.includes('YOUR_') &&
-  !secretKey(key);
+import { readConfig } from './config';
+const config = readConfig(import.meta.env, window.location.origin);
+const { url, key } = config;
+export const configured = config.configured;
+export const configErrors = config.errors;
 export const supabase = configured
   ? createClient(url, key, {
       auth: {
@@ -37,4 +14,4 @@ export const supabase = configured
       },
     })
   : null;
-export const appUrl = (import.meta.env.VITE_APP_URL || window.location.origin).replace(/\/$/, '');
+export const appUrl = config.appUrl;

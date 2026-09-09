@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { queryClient } from '../../lib/queryClient';
 import { api } from '../../services/api';
+import { useToday } from '../../hooks/useToday';
 const Context = createContext(null);
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -56,6 +57,8 @@ export function AuthProvider({ children }) {
     queryFn: () => api.profile(user.id),
     enabled: !!user,
   });
+  // Date-sensitive pages subscribe to this context even when cached rows stay unchanged.
+  const today = useToday(profileQuery.data?.timezone);
   async function signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -71,6 +74,7 @@ export function AuthProvider({ children }) {
         loading,
         authError,
         profile: profileQuery.data,
+        today,
         profileQuery,
         recovering,
         setRecovering,

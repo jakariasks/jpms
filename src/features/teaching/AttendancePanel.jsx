@@ -21,11 +21,13 @@ export default function AttendancePanel({ data, members, batch = false }) {
   const today = todayIn(profile?.timezone);
   const action = useAction();
   const key = batch ? 'batch_student_id' : 'student_id';
-  const [date, setDate] = useState(today),
-    [month, setMonth] = useState(monthOf(today)),
+  const [selectedDate, setDate] = useState(null),
+    [selectedMonth, setMonth] = useState(null),
     [view, setView] = useState('day'),
     [editing, setEditing] = useState(null),
     [deleting, setDeleting] = useState(null);
+  const date = selectedDate ?? today;
+  const month = selectedMonth ?? monthOf(today);
   const name = (m) => m.student_name || m.name;
   const records = data.attendance
     .filter((a) => members.some((m) => m.id === a[key]) && monthOf(a.date) === month)

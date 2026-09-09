@@ -462,7 +462,7 @@ export function Loading() {
 }
 export function QueryState({ query, children }) {
   if (query.isPending) return <Loading />;
-  if (query.isError)
+  if (query.isError && query.data === undefined)
     return (
       <Card>
         <Empty
@@ -477,7 +477,22 @@ export function QueryState({ query, children }) {
         />
       </Card>
     );
-  return children(query.data);
+  return (
+    <>
+      {query.isError && (
+        <div
+          className="notice mb-5 flex flex-wrap items-center justify-between gap-3"
+          role="status"
+        >
+          <p>Could not refresh. Showing the last loaded data.</p>
+          <Button variant="secondary" busy={query.isFetching} onClick={() => query.refetch()}>
+            Retry refresh
+          </Button>
+        </div>
+      )}
+      {children(query.data)}
+    </>
+  );
 }
 export class ErrorBoundary extends Component {
   state = { error: null };

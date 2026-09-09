@@ -202,7 +202,8 @@ export default function Dashboard() {
   const { openTransaction } = useOutletContext();
   const mobile = useSyncExternalStore(subscribeToViewport, isMobileViewport, desktopFallback);
   const today = todayIn(profile?.timezone);
-  const [month, setMonth] = useState(monthOf(today));
+  const [selectedMonth, setMonth] = useState(null);
+  const month = selectedMonth ?? monthOf(today);
   if (mobile)
     return (
       <MobileHome query={query} profile={profile} today={today} openTransaction={openTransaction} />

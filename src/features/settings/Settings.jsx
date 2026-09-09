@@ -75,6 +75,9 @@ export default function Settings() {
   const client = useQueryClient();
   const query = useWorkspace();
   const { theme, setTheme } = useTheme();
+  const providers =
+    user?.identities?.map((identity) => identity.provider) || user?.app_metadata?.providers || [];
+  const googleOnly = providers.includes('google') && !providers.includes('email');
   const [uploading, setUploading] = useState(false),
     [exporting, setExporting] = useState(false),
     [passwordOpen, setPasswordOpen] = useState(false),
@@ -186,7 +189,7 @@ export default function Settings() {
             <p>Update your password or sign out of this account.</p>
             <div className="flex gap-3 flex-wrap">
               <Button variant="secondary" icon={ShieldCheck} onClick={() => setPasswordOpen(true)}>
-                Change password
+                {googleOnly ? 'Set / change password' : 'Change password'}
               </Button>
               <Button
                 variant="secondary"
@@ -302,15 +305,23 @@ export default function Settings() {
       </div>
       {passwordOpen && (
         <FormModal
-          title="Change password"
+          title={googleOnly ? 'Set / change JPMS password' : 'Change password'}
+          description={
+            googleOnly
+              ? 'Create a JPMS password to also sign in with email. Your Google password is not needed.'
+              : 'Choose a new password for this account.'
+          }
           fields={[
             {
               name: 'current_password',
               label: 'Current password',
               type: 'password',
-              required: true,
+              required: !googleOnly,
               wide: true,
               autoComplete: 'current-password',
+              note: googleOnly
+                ? 'Leave blank if you have not set a JPMS password before.'
+                : undefined,
             },
             {
               name: 'password',
@@ -338,7 +349,7 @@ export default function Settings() {
             if (v.password !== v.confirm) throw new Error('Passwords do not match.');
             const { error } = await supabase.auth.updateUser({
               password: v.password,
-              current_password: v.current_password,
+              ...(v.current_password ? { current_password: v.current_password } : {}),
             });
             if (error) throw error;
             toast.success('Password updated');

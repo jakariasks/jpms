@@ -23,7 +23,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useWorkspace } from '../hooks/useWorkspace';
 import { todayIn, displayDate } from '../utils/domain';
 import { errorMessage } from '../services/api';
-import { Loading, Card, Empty, Button } from '../components/ui';
+import { Loading, QueryState, Button } from '../components/ui';
 import ProfileAvatar from '../components/ProfileAvatar';
 import TransactionForm from '../features/finance/TransactionForm';
 const nav = [
@@ -89,7 +89,7 @@ function useBrowserAlerts(data, user) {
 }
 export default function AppLayout() {
   const { user, loading, profile, profileQuery, signOut, recovering, authError } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { isDark, setTheme } = useTheme();
   const query = useWorkspace();
   const location = useLocation();
   const [drawer, setDrawer] = useState(false);
@@ -187,10 +187,10 @@ export default function AppLayout() {
             </span>
             <button
               className="icon-btn"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              onClick={() => setTheme(isDark ? 'light' : 'dark')}
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
+              {isDark ? <Sun size={19} /> : <Moon size={19} />}
             </button>
             <Link
               className="icon-btn relative"
@@ -206,17 +206,9 @@ export default function AppLayout() {
           </div>
         </header>
         <main className="content" id="main-content">
-          {profileQuery.isError ? (
-            <Card>
-              <Empty
-                title="Profile unavailable"
-                description={errorMessage(profileQuery.error)}
-                action={<Button onClick={() => profileQuery.refetch()}>Try again</Button>}
-              />
-            </Card>
-          ) : (
-            <Outlet context={{ openTransaction }} />
-          )}
+          <QueryState query={profileQuery}>
+            {() => <Outlet context={{ openTransaction }} />}
+          </QueryState>
         </main>
       </div>
       <nav className="mobile-nav" aria-label="Quick navigation">

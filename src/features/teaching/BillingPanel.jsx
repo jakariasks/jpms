@@ -27,9 +27,10 @@ export default function BillingPanel({ data, studentId, batchId, kind = 'tuition
   const { profile } = useAuth();
   const today = todayIn(profile?.timezone);
   const action = useAction();
-  const [month, setMonth] = useState(monthOf(today)),
+  const [selectedMonth, setMonth] = useState(null),
     [editing, setEditing] = useState(null),
     [deleting, setDeleting] = useState(null);
+  const month = selectedMonth ?? monthOf(today);
   const belongs = (i) =>
     studentId
       ? i.student_id === studentId
