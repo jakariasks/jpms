@@ -94,24 +94,21 @@ export default function AttendancePanel({ data, members, batch = false }) {
                   aria-label={`Attendance for ${name(m)}`}
                   value={saved(m)?.status || ''}
                   disabled={action.isPending}
-                  onChange={(e) =>
-                    e.target.value &&
+                  onChange={(e) => {
+                    // Snapshot the selection before the async mutation runs. React may
+                    // restore this controlled select to its last saved value meanwhile.
+                    const status = e.currentTarget.value;
+                    if (!status) return;
+                    const attendance = {
+                      [key]: m.id,
+                      date,
+                      status,
+                      note: saved(m)?.note || '',
+                    };
                     action
-                      .run(
-                        (uid) =>
-                          api.attendance(
-                            {
-                              [key]: m.id,
-                              date,
-                              status: e.target.value,
-                              note: saved(m)?.note || '',
-                            },
-                            uid,
-                          ),
-                        'Attendance saved',
-                      )
-                      .catch(() => {})
-                  }
+                      .run((uid) => api.attendance(attendance, uid), 'Attendance saved')
+                      .catch(() => {});
+                  }}
                 >
                   <option value="" disabled>
                     Not marked
